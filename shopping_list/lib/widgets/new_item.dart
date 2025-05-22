@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shopping_list/data/categories.dart';
+import 'package:shopping_list/models/category.dart';
+import 'package:shopping_list/models/grocery_item.dart';
 
 class NewItem extends StatefulWidget {
 
@@ -14,6 +16,28 @@ class NewItem extends StatefulWidget {
 
 
 class _NewItemState extends State<NewItem>{
+
+  final _formKey = GlobalKey<FormState>();
+  var _enteredName = '';
+  var _enteredQuantity = 1;
+  var _selectedCategory = categories[Categories.vegetables]!;
+
+  void _saveItem() {
+    if (_formKey.currentState!.validate()){
+      _formKey.currentState!.save();
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: DateTime.now().toString(), 
+          name: _enteredName, 
+          quantity: _enteredQuantity, 
+          category: _selectedCategory,
+          ),
+      );
+    }
+   
+    
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,6 +48,7 @@ class _NewItemState extends State<NewItem>{
         body: Padding(
           padding: const EdgeInsets.all(12),
           child: Form(
+            key: _formKey,
             child: Column(
               children: [
                 TextFormField(
@@ -38,6 +63,9 @@ class _NewItemState extends State<NewItem>{
                       
                     return null;
                   },
+                  onSaved: (value) {
+                    _enteredName = value!;
+                  },
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -46,7 +74,8 @@ class _NewItemState extends State<NewItem>{
                       decoration: const InputDecoration(
                         label: Text('Quantity'),
                       ),
-                      initialValue: '1',
+                      keyboardType: TextInputType.number,
+                      initialValue: _enteredQuantity.toString(),
                       validator: (value) {
                         if (value == null || value.isEmpty || int.tryParse(value) == null || int.tryParse(value)! <= 0){
                           return 'Must be positive.';
@@ -54,10 +83,15 @@ class _NewItemState extends State<NewItem>{
                       
                         return null;
                       },
+                      onSaved: (value){
+                        _enteredQuantity = int.parse(value!);
+                      },
                     ),
                     ),
                     const SizedBox(width: 8,),
                     Expanded(child: DropdownButtonFormField(
+                      
+                      value: _selectedCategory,
                       items: [
                         for(final category in categories.entries)
                           DropdownMenuItem(
@@ -76,20 +110,26 @@ class _NewItemState extends State<NewItem>{
                               
                           )
                       ], 
-                      onChanged: (value) {},
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
+                        
+                      },
                       ),
                 ),
                 ]
                 ),
+                const SizedBox(height: 12,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () {}, 
+                      onPressed:() {_formKey.currentState!.validate();}, 
                       child: const Text('Reset'),
                     ),
                     ElevatedButton(
-                      onPressed: () {}, 
+                      onPressed: _saveItem, 
                       child: const Text('Add Item')
                     ),
                   ],
